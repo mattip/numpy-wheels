@@ -5,6 +5,7 @@ env:
         - BUILD_COMMIT=e94cec800304a6a467cf90ce4e7d3e207770b4b4
         - BUILD_DEPENDS=cython
         - TEST_DEPENDS="pytest hypothesis"
+        - TEST_DEPENDS=pytest
         - WHEELHOUSE_UPLOADER_USERNAME=travis-worker
         # Following generated with
         # travis encrypt -r MacPython/numpy-wheels WHEELHOUSE_UPLOADER_SECRET=<the api key>
@@ -23,6 +24,7 @@ jobs:
   include:
     - os: linux
       env:
+        - PLAT=x86_64
         - MB_PYTHON_VERSION=3.6
         - MB_ML_VER=2010
         - PLAT=x86_64
@@ -35,6 +37,7 @@ jobs:
         - DOCKER_TEST_IMAGE=multibuild/xenial_{PLAT}
     - os: linux
       env:
+        - PLAT=x86_64
         - MB_PYTHON_VERSION=3.7
         - MB_ML_VER=2010
         - PLAT=x86_64
@@ -47,6 +50,7 @@ jobs:
         - DOCKER_TEST_IMAGE=multibuild/xenial_{PLAT}
     - os: linux
       env:
+        - PLAT=x86_64
         - MB_PYTHON_VERSION=3.8
         - MB_ML_VER=2010
         - PLAT=x86_64
@@ -61,20 +65,65 @@ jobs:
       language: generic
       osx_image: xcode10.1
       env:
+        - PLAT=x86_64
         - MB_PYTHON_VERSION=3.6
         - MB_PYTHON_OSX_VER=10.9
     - os: osx
       language: generic
       osx_image: xcode10.1
       env:
+        - PLAT=x86_64
         - MB_PYTHON_VERSION=3.7
         - MB_PYTHON_OSX_VER=10.9
     - os: osx
       language: generic
       osx_image: xcode10.1
       env:
+        - PLAT=x86_64
         - MB_PYTHON_VERSION=3.8
         - MB_PYTHON_OSX_VER=10.9
+    - os: linux
+      arch: arm64
+      env:
+        - PLAT=aarch64
+        - MB_ML_VER=2014
+        - MB_PYTHON_VERSION=3.6
+        - DEBUG_PRINT=1
+    - os: linux
+      arch: s390x
+      env:
+        - PLAT=s390x
+        - MB_ML_VER=2014
+        - MB_PYTHON_VERSION=3.6
+        - DEBUG_PRINT=1
+    - os: linux
+      arch: ppc64le
+      env:
+        - PLAT=ppc64le
+        - MB_ML_VER=2014
+        - MB_PYTHON_VERSION=3.6
+        - DEBUG_PRINT=1
+    - os: linux
+      arch: arm64
+      env:
+        - PLAT=aarch64
+        - MB_ML_VER=2014
+        - MB_PYTHON_VERSION=3.7
+        - DEBUG_PRINT=1
+    - os: linux
+      arch: s390x
+      env:
+        - PLAT=s390x
+        - MB_ML_VER=2014
+        - MB_PYTHON_VERSION=3.7
+        - DEBUG_PRINT=1
+    - os: linux
+      arch: ppc64le
+      env:
+        - PLAT=ppc64le
+        - MB_ML_VER=2014
+        - MB_PYTHON_VERSION=3.7
+        - DEBUG_PRINT=1
 
 before_install:
     - if [ "$TRAVIS_BRANCH" == "master" ]; then
@@ -87,22 +136,13 @@ before_install:
       fi
     # Set DEBUG_PRINT environment variable in settings
     - if [ -n "${DEBUG_PRINT}" ]; then set -x; fi
-    - source multibuild/common_utils.sh
-    - source multibuild/travis_steps.sh
-    - before_install
+    - ./travis_before_install.sh
 
 install:
-    # Maybe get and clean and patch source
-    - clean_code $REPO_DIR $BUILD_COMMIT
-    - ./patch_code.sh $REPO_DIR
-    - if [ "$TRAVIS_OS_NAME"  == "linux" ]; then
-          export CFLAGS=${CFLAGS}" -Wno-sign-compare -Wno-unused-result\
-                                   -Wno-strict-aliasing";
-      fi
-    - build_wheel $REPO_DIR $PLAT
+    - ./travis_install.sh
 
 script:
-    - install_run $PLAT
+    - ./travis_script.sh
 
 after_success:
     # Upload wheels to Rackspace container
